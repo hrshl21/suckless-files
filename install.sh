@@ -73,10 +73,25 @@ for entry in "${TOOLS[@]}"; do
   (cd "$dir" && sudo make clean install)
 done
 
+echo "Setting up pywal..."
+mkdir -p ~/Pictures/wallpapers
+grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' ~/.bash_profile 2>/dev/null || \
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bash_profile
+grep -qxF '[ -f ~/.cache/wal/sequences ] && cat ~/.cache/wal/sequences' ~/.bashrc 2>/dev/null || \
+  echo '[ -f ~/.cache/wal/sequences ] && cat ~/.cache/wal/sequences' >> ~/.bashrc
+
 echo "Setting up .xinitrc to start dwm..."
 cat <<'EOF' > ~/.xinitrc
 #!/bin/sh
-wal -i ~/Pictures/wallpapers/default.jpg &  # Update this path to your wallpaper
+export PATH="$HOME/.local/bin:$PATH"
+
+WALLPAPER="$HOME/Pictures/wallpapers/default.jpg"
+if [ -f "$WALLPAPER" ]; then
+  wal -i "$WALLPAPER" &
+else
+  echo "No wallpaper at $WALLPAPER - skipping pywal. Drop an image there to enable it." >&2
+fi
+
 picom --config ~/.config/picom/picom.conf & # Optional: set config path
 dwmblocks &
 exec dwm
