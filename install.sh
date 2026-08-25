@@ -84,4 +84,22 @@ EOF
 
 chmod +x ~/.xinitrc
 
-echo "DWM environment setup complete. Run 'startx' to launch dwm."
+echo "Registering dwm as a login-manager session..."
+sudo tee /usr/local/bin/start-dwm.sh > /dev/null <<'EOF'
+#!/bin/sh
+[ -f "$HOME/.xinitrc" ] && exec sh "$HOME/.xinitrc"
+exec dwm
+EOF
+sudo chmod +x /usr/local/bin/start-dwm.sh
+
+sudo tee /usr/share/xsessions/dwm.desktop > /dev/null <<'EOF'
+[Desktop Entry]
+Name=dwm
+Comment=Dynamic window manager
+Exec=/usr/local/bin/start-dwm.sh
+Type=Application
+EOF
+
+echo "DWM environment setup complete."
+echo "On a real TTY (no desktop session running), run 'startx' to launch dwm directly."
+echo "From a login manager (GDM/SDDM/LightDM), log out and pick the 'dwm' session from the gear/session menu instead."
