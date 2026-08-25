@@ -25,7 +25,7 @@ if command -v pacman &>/dev/null; then
   echo "[2/4] Installing essentials and build dependencies..."
   sudo pacman -S --noconfirm --needed \
     git base-devel xorg-server xorg-xinit xterm \
-    libx11 libxft libxinerama
+    libx11 libxft libxinerama libxrandr
 
   echo "[3/4] Installing extras: picom, pywal, feh..."
   sudo pacman -S --noconfirm --needed picom python-pywal feh
@@ -39,7 +39,7 @@ elif command -v dnf &>/dev/null; then
     git gcc gcc-c++ make pkgconf-pkg-config \
     xorg-x11-server-Xorg xorg-x11-xinit xterm \
     libX11-devel libXft-devel libXinerama-devel libXext-devel \
-    freetype-devel fontconfig-devel
+    libXrandr-devel freetype-devel fontconfig-devel
 
   echo "[3/4] Installing extras: picom, pywal, feh..."
   sudo dnf install -y picom feh python3-pip
