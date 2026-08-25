@@ -35,9 +35,9 @@ elif command -v dnf &>/dev/null; then
   sudo dnf upgrade --refresh -y
 
   echo "[2/4] Installing essentials and build dependencies..."
-  sudo dnf groupinstall -y "Development Tools" "C Development Tools and Libraries"
   sudo dnf install -y \
-    git xorg-x11-server-Xorg xorg-x11-xinit xterm \
+    git gcc gcc-c++ make pkgconf-pkg-config \
+    xorg-x11-server-Xorg xorg-x11-xinit xterm \
     libX11-devel libXft-devel libXinerama-devel libXext-devel \
     freetype-devel fontconfig-devel
 
