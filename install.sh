@@ -80,18 +80,72 @@ grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' ~/.bash_profile 2>/dev/null || 
 grep -qxF '[ -f ~/.cache/wal/sequences ] && cat ~/.cache/wal/sequences' ~/.bashrc 2>/dev/null || \
   echo '[ -f ~/.cache/wal/sequences ] && cat ~/.cache/wal/sequences' >> ~/.bashrc
 
+echo "Installing set-wallpaper helper..."
+mkdir -p ~/.local/bin
+cat <<'EOF' > ~/.local/bin/set-wallpaper
+#!/bin/bash
+# set-wallpaper: pick and apply a wallpaper (with pywal), remembering the choice.
+#
+# Usage:
+#   set-wallpaper                # reuse last wallpaper, or pick random if none set yet
+#   set-wallpaper --random       # force a new random pick from WALLPAPER_DIR
+#   set-wallpaper /path/to/img   # use this specific image
+#   set-wallpaper /path/to/dir   # pick a random image from this directory
+
+set -euo pipefail
+
+WALLPAPER_DIR="${WALLPAPER_DIR:-$HOME/Pictures/wallpapers}"
+STATE_DIR="$HOME/.config/wallpaper"
+CURRENT_LINK="$STATE_DIR/current"
+
+mkdir -p "$STATE_DIR"
+
+pick_random() {
+  find "$1" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.bmp' \) 2>/dev/null | shuf -n 1
+}
+
+arg="${1:-}"
+target=""
+
+if [ -z "$arg" ]; then
+  if [ -e "$CURRENT_LINK" ]; then
+    target="$(readlink -f "$CURRENT_LINK")"
+  else
+    target="$(pick_random "$WALLPAPER_DIR")"
+  fi
+elif [ "$arg" = "--random" ]; then
+  target="$(pick_random "$WALLPAPER_DIR")"
+elif [ -d "$arg" ]; then
+  target="$(pick_random "$arg")"
+elif [ -f "$arg" ]; then
+  target="$arg"
+else
+  echo "set-wallpaper: no such file or directory: $arg" >&2
+  exit 1
+fi
+
+if [ -z "$target" ]; then
+  echo "set-wallpaper: no images found in $WALLPAPER_DIR" >&2
+  echo "Drop some .jpg/.png files there, or pass a path: set-wallpaper /path/to/image.jpg" >&2
+  exit 1
+fi
+
+ln -sfn "$target" "$CURRENT_LINK"
+
+if command -v wal &>/dev/null; then
+  wal -i "$target"
+elif command -v feh &>/dev/null; then
+  feh --bg-fill "$target"
+fi
+EOF
+chmod +x ~/.local/bin/set-wallpaper
+
 echo "Setting up .xinitrc to start dwm..."
 cat <<'EOF' > ~/.xinitrc
 #!/bin/sh
 export PATH="$HOME/.local/bin:$PATH"
 
-WALLPAPER="$HOME/Pictures/wallpapers/default.jpg"
-if [ -f "$WALLPAPER" ]; then
-  wal -i "$WALLPAPER" &
-else
-  echo "No wallpaper at $WALLPAPER - skipping pywal. Drop an image there to enable it." >&2
-fi
-
+set-wallpaper &
 picom --config ~/.config/picom/picom.conf & # Optional: set config path
 dwmblocks &
 exec dwm
